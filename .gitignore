@@ -144,3 +144,16 @@ screenshot_*.png
 mock_preview_*.html
 logo_touka.png
 logo_元画像.png
+
+# Local AI Dev & Scratch
+.agents/
+AGENTS.md
+Antigravity*.md
+markdown/
+*.legacy.html
+*.bak
+mock_preview_*.html
+logo_touka.png
+logo_元画像.png
+screenshot_*.png
+temp_*.json
