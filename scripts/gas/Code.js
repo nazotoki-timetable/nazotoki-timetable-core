@@ -5,15 +5,16 @@
  * ==========================================================================
  * 
  * 主な機能:
- * 1. 1公演1行の「入力補助シート」から、本番「公演一覧」シートへ全自動展開
- * 2. 開始時間の複数入力（カンマ・改行・スペース区切り）の自動解析
- * 3. Web API (doGet) によるJSON配信
+ * 1. 1公演1行の「① 公演かんたん入力」から「② 公演一覧」へ全自動展開
+ * 2. ボタンクリック（図形描画ボタン）での直感的一括反映
+ * 3. 展開後の「② 公演一覧」での個別編集・完売設定の自由なカスタマイズ対応
+ * 4. Web API (doGet) によるJSON自動配信
  */
 
 // シート名の定義
+const SHEET_DRAFT = "① 公演かんたん入力";
+const SHEET_MAIN = "② 公演一覧";
 const SHEET_CONFIG = "設定";
-const SHEET_MAIN = "公演一覧";
-const SHEET_DRAFT = "📝入力補助シート";
 
 /**
  * スプレッドシートを開いたときにメニューを追加
@@ -21,42 +22,74 @@ const SHEET_DRAFT = "📝入力補助シート";
 function onOpen() {
   const ui = SpreadsheetApp.getUi();
   ui.createMenu("🚀 タイムテーブル便利機能")
-    .addItem("✨ 【初回】入力補助シートを自動作成する", "setupDraftSheet")
+    .addItem("✨ 【初回】入力シートをセットアップする", "setupDraftSheet")
     .addSeparator()
-    .addItem("⚡ 入力補助シートから【公演一覧】へ自動展開する", "expandDraftToTimetable")
+    .addItem("⚡ 公演一覧へ反映する（ボタン割り当て用）", "expandDraftToTimetable")
     .addToUi();
 }
 
 /**
- * 入力補助シートを初期セットアップ（ヘッダー・色分け・入力例の自動作成）
+ * 入力シートを初期セットアップ（ヘッダー・ボタン配置エリア・色分け・入力例の自動作成）
  */
 function setupDraftSheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let draftSheet = ss.getSheetByName(SHEET_DRAFT);
   
+  // 旧シート名があればリネーム、無ければ新規作成
+  let draftSheet = ss.getSheetByName(SHEET_DRAFT) || ss.getSheetByName("📝入力補助シート");
   if (!draftSheet) {
     draftSheet = ss.insertSheet(SHEET_DRAFT, 0);
+  } else {
+    draftSheet.setName(SHEET_DRAFT);
   }
 
-  // ヘッダー定義
+  // 1行目: 操作コントロール・ボタン配置用バナー
+  draftSheet.getRange("A1:C1").merge()
+    .setValue("🎪 公演かんたん入力")
+    .setBackground("#1e3a8a")
+    .setFontColor("#ffffff")
+    .setFontWeight("bold")
+    .setHorizontalAlignment("center")
+    .setVerticalAlignment("middle");
+
+  draftSheet.getRange("D1:F1").merge()
+    .setValue("【ここにボタンを配置】")
+    .setBackground("#dbeafe")
+    .setFontColor("#1e40af")
+    .setFontWeight("bold")
+    .setHorizontalAlignment("center")
+    .setVerticalAlignment("middle");
+
+  draftSheet.getRange("G1:S1").merge()
+    .setValue("👈 入力が終わったら左のボタンを押すと「② 公演一覧」へ一括反映されます（※スクロールしても常に固定表示）")
+    .setBackground("#f8fafc")
+    .setFontColor("#64748b")
+    .setFontSize(9)
+    .setVerticalAlignment("middle");
+
+  draftSheet.setRowHeight(1, 45);
+
+  // 2行目: ヘッダー定義
   const headers = [
     "日程", "団体名", "公演名", "会場(部屋)", "開始時間リスト (カンマや改行で複数記入)",
     "所要時間(分)", "参加料金", "定員", "予約形式", "難易度",
-    "内容目安 (・で区切るとタグ)", "予約URL", "公演ビジュアルURL",
+    "内容目安 (・区切りでタグ)", "予約URL", "公演ビジュアルURL",
     "所要時間優先テキスト", "受付終了時間", "完全終了時間", "最終フェーズ表示名", "ノイズ演出", "南京錠パスワード"
   ];
 
-  draftSheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  draftSheet.getRange(2, 1, 1, headers.length).setValues([headers]);
+  draftSheet.setRowHeight(2, 32);
   
-  // スタイル設定
-  draftSheet.getRange("A1:E1").setBackground("#dbeafe").setFontColor("#1e3a8a").setFontWeight("bold"); // 必須(青)
-  draftSheet.getRange("F1:H1").setBackground("#dcfce7").setFontColor("#14532d").setFontWeight("bold"); // 基本(緑)
-  draftSheet.getRange("I1:M1").setBackground("#fef9c3").setFontColor("#713f12").setFontWeight("bold"); // 詳細(黄)
-  draftSheet.getRange("N1:S1").setBackground("#f3e8ff").setFontColor("#581c87").setFontWeight("bold"); // 演出(紫)
-  draftSheet.setFrozenRows(1);
+  // スタイル設定（色分け）
+  draftSheet.getRange("A2:E2").setBackground("#2563eb").setFontColor("#ffffff").setFontWeight("bold"); // 必須(青)
+  draftSheet.getRange("F2:H2").setBackground("#16a34a").setFontColor("#ffffff").setFontWeight("bold"); // 基本(緑)
+  draftSheet.getRange("I2:M2").setBackground("#d97706").setFontColor("#ffffff").setFontWeight("bold"); // 詳細(橙)
+  draftSheet.getRange("N2:S2").setBackground("#7c3aed").setFontColor("#ffffff").setFontWeight("bold"); // 演出(紫)
+  
+  // 1〜2行目を固定（スクロールしてもボタンと列名が常に常駐）
+  draftSheet.setFrozenRows(2);
 
   // 見本サンプルデータ（未入力の場合のみ挿入）
-  if (draftSheet.getLastRow() <= 1) {
+  if (draftSheet.getLastRow() <= 2) {
     const sampleRows = [
       [
         "1日目", "謎解き研究所", "からくり時計塔からの脱出", "メインホール(1F)",
@@ -83,57 +116,81 @@ function setupDraftSheet() {
         "・初心者歓迎・カフェ謎", "", "", "", "", "", "", "", ""
       ]
     ];
-    draftSheet.getRange(2, 1, sampleRows.length, sampleRows[0].length).setValues(sampleRows);
+    draftSheet.getRange(3, 1, sampleRows.length, sampleRows[0].length).setValues(sampleRows);
   }
 
   // 予約形式のプルダウン設定
   const ruleType = SpreadsheetApp.newDataValidation()
     .requireValueInList(["事前予約", "当日受付(ファミレス式)", "事前予約(時間自由)"], true)
-    .setAllowInvalid(true) // 自由記述も拒否せず警告のみ
+    .setAllowInvalid(true)
     .build();
-  draftSheet.getRange("I2:I100").setDataValidation(ruleType);
+  draftSheet.getRange("I3:I100").setDataValidation(ruleType);
 
   // 列幅の自動調整
   draftSheet.autoResizeColumns(1, headers.length);
   draftSheet.setColumnWidth(5, 260); // 時間リストは見やすく広めに
 
-  SpreadsheetApp.getUi().alert("✨ 【入力補助シート】をセットアップしました！\nサンプルデータが入っていますので、自由に書き換えて使ってください。");
+  // 「② 公演一覧」シートも存在確認またはリネーム
+  let mainSheet = ss.getSheetByName(SHEET_MAIN) || ss.getSheetByName("公演一覧");
+  if (!mainSheet) {
+    mainSheet = ss.insertSheet(SHEET_MAIN, 1);
+  } else {
+    mainSheet.setName(SHEET_MAIN);
+  }
+
+  SpreadsheetApp.getUi().alert(
+    "✨ セットアップ完了！",
+    "「" + SHEET_DRAFT + "」シートをセットアップしました！\n\n" +
+    "【次のステップ: ボタンの設置】\n" +
+    "1. スプレッドシートのメニュー「挿入」>「描画」をクリック\n" +
+    "2. 四角形を描いて「⚡ 公演一覧に反映する」と入力し「保存して閉じる」\n" +
+    "3. ボタンをD1セルの位置に配置し、右上の「︙」から「スクリプトを割り当て」を選択\n" +
+    "4. 「expandDraftToTimetable」と入力すれば、いつでもボタン1発で反映できるようになります！",
+    SpreadsheetApp.getUi().ButtonSet.OK
+  );
 }
 
 /**
- * 入力補助シートのデータを本番「公演一覧」シートへ展開
+ * 入力シートのデータを「② 公演一覧」シートへ展開
+ * （図形描画ボタンまたはメニューから呼び出されます）
  */
 function expandDraftToTimetable() {
   const ui = SpreadsheetApp.getUi();
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   
-  const draftSheet = ss.getSheetByName(SHEET_DRAFT);
+  const draftSheet = ss.getSheetByName(SHEET_DRAFT) || ss.getSheetByName("📝入力補助シート");
   if (!draftSheet) {
     ui.alert("⚠️ 「" + SHEET_DRAFT + "」シートが見つかりません。先に【初回セットアップ】を実行してください。");
     return;
   }
 
   // 本番シートの取得（なければ作成）
-  let mainSheet = ss.getSheetByName(SHEET_MAIN);
+  let mainSheet = ss.getSheetByName(SHEET_MAIN) || ss.getSheetByName("公演一覧");
   if (!mainSheet) {
-    mainSheet = ss.insertSheet(SHEET_MAIN);
+    mainSheet = ss.insertSheet(SHEET_MAIN, 1);
+  } else {
+    mainSheet.setName(SHEET_MAIN);
   }
 
   const lastRow = draftSheet.getLastRow();
-  if (lastRow <= 1) {
-    ui.alert("⚠️ 入力補助シートにデータがありません。");
+  if (lastRow <= 2) {
+    ui.alert("⚠️ 「" + SHEET_DRAFT + "」シートに公演データが入力されていません。3行目以降に入力してください。");
     return;
   }
 
-  // 上書き確認
+  // 上書き・個別編集への注意喚起ダイアログ
   const res = ui.alert(
-    "展開の確認",
-    "入力補助シートのデータを「" + SHEET_MAIN + "」シートへ展開します。\n（既存の「" + SHEET_MAIN + "」の内容は上書き更新されます。よろしいですか？）",
+    "公演一覧への反映確認",
+    "「" + SHEET_DRAFT + "」の内容を「" + SHEET_MAIN + "」へ展開します。\n\n" +
+    "⚠️ 【ご注意】\n" +
+    "「" + SHEET_MAIN + "」シートに直接書き込んだ完売設定や微調整は上書きされます。\n" +
+    "反映を実行してよろしいですか？",
     ui.ButtonSet.YES_NO
   );
   if (res !== ui.Button.YES) return;
 
-  const draftData = draftSheet.getRange(2, 1, lastRow - 1, 19).getValues();
+  // 3行目以降のデータを取得
+  const draftData = draftSheet.getRange(3, 1, lastRow - 2, 19).getValues();
 
   // 本番シート用のヘッダー定義
   const mainHeaders = [
@@ -174,7 +231,6 @@ function expandDraftToTimetable() {
     if (reserveType === "当日受付(ファミレス式)" || timeListStr === "随時" || timeListStr === "") {
       times = ["随時"];
     } else {
-      // 時刻っぽい文字列 (例: 10:30, 9:00 など) を抽出
       const rawTokens = timeListStr.split(/[\r\n,、\s]+/);
       rawTokens.forEach(t => {
         const trimmed = t.trim();
@@ -214,12 +270,13 @@ function expandDraftToTimetable() {
   mainSheet.clearContents();
   mainSheet.getRange(1, 1, 1, mainHeaders.length).setValues([mainHeaders]);
   mainSheet.getRange(1, 1, 1, mainHeaders.length).setBackground("#1f2937").setFontColor("#ffffff").setFontWeight("bold");
+  mainSheet.setRowHeight(1, 35);
   mainSheet.setFrozenRows(1);
 
   if (expandedRows.length > 0) {
     mainSheet.getRange(2, 1, expandedRows.length, mainHeaders.length).setValues(expandedRows);
     
-    // 完売設定のプルダウン（警告のみ）
+    // 完売設定のプルダウン（警告のみ・編集可能）
     const ruleSoldOut = SpreadsheetApp.newDataValidation()
       .requireValueInList(["完売", "SOLD OUT", "空席あり"], true)
       .setAllowInvalid(true)
@@ -229,9 +286,73 @@ function expandDraftToTimetable() {
 
   mainSheet.autoResizeColumns(1, mainHeaders.length);
 
+  // 展開後、「② 公演一覧」シートを前面に表示
+  ss.setActiveSheet(mainSheet);
+
   ui.alert(
-    "🎉 展開完了！",
-    draftData.filter(r => r[2]).length + " 件の公演情報から、計 " + expandedRows.length + " 行のタイムテーブルデータを生成しました！\n\n「" + SHEET_MAIN + "」シートを確認してください。",
+    "🎉 反映完了！",
+    draftData.filter(r => r[2]).length + " 件の公演情報から、計 " + expandedRows.length + " 行のタイムテーブルデータを「" + SHEET_MAIN + "」へ展開しました！\n\n" +
+    "💡 必要に応じて、この「" + SHEET_MAIN + "」シートで公演回ごとの完売設定や微調整を行ってください。",
     ui.ButtonSet.OK
   );
+}
+
+/**
+ * Web API (doGet) - WebサイトへのJSONデータ配信
+ */
+function doGet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  
+  // 1. 設定シートの読み込み
+  const configSheet = ss.getSheetByName(SHEET_CONFIG);
+  const config = {};
+  if (configSheet) {
+    const configData = configSheet.getDataRange().getValues();
+    configData.forEach(row => {
+      const key = String(row[0] || "").trim();
+      if (key) {
+        config[key] = row[1] !== undefined ? String(row[1]) : "";
+      }
+    });
+  }
+
+  // 2. 公演一覧シートの読み込み（② 公演一覧 または 公演一覧）
+  const mainSheet = ss.getSheetByName(SHEET_MAIN) || ss.getSheetByName("公演一覧");
+  const shows = [];
+  
+  if (mainSheet && mainSheet.getLastRow() > 1) {
+    const data = mainSheet.getDataRange().getValues();
+    const headers = data[0].map(h => String(h).trim());
+    
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      const showObj = {};
+      let hasData = false;
+      
+      headers.forEach((h, colIdx) => {
+        if (h) {
+          let val = row[colIdx];
+          if (val instanceof Date) {
+            const hours = String(val.getHours()).padStart(2, '0');
+            const minutes = String(val.getMinutes()).padStart(2, '0');
+            val = hours + ":" + minutes;
+          }
+          showObj[h] = val !== undefined && val !== null ? String(val).trim() : "";
+          if (showObj[h]) hasData = true;
+        }
+      });
+      
+      if (hasData && (showObj["公演名"] || showObj["団体名"])) {
+        shows.push(showObj);
+      }
+    }
+  }
+
+  const result = {
+    config: config,
+    shows: shows
+  };
+
+  return ContentService.createTextOutput(JSON.stringify(result))
+    .setMimeType(ContentService.MimeType.JSON);
 }
