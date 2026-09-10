@@ -1,4 +1,4 @@
-﻿import { GasAdapter } from './adapters/GasAdapter.js';
+import { GasAdapter } from './adapters/GasAdapter.js';
 import { MockAdapter } from './adapters/MockAdapter.js';
 import { Parser } from './core/Parser.js';
 import { ConflictDetector } from './core/ConflictDetector.js';
@@ -126,23 +126,31 @@ function initAppDOM() {
     }
   }
 
-  const finalLogoUrl = config.logoUrl || './logo.png';
+  const finalLogoUrl = config.logoUrl || '';
   const logoEl = document.getElementById('modal-fes-logo');
   const modalTitleEl = document.getElementById('modal-fes-title');
   if (logoEl && modalTitleEl) {
-    logoEl.src = finalLogoUrl;
-    logoEl.classList.remove('hidden');
-    modalTitleEl.classList.add('hidden');
-    logoEl.onerror = () => {
+    const modalTitle = config.title.includes('タイムテーブル')
+      ? config.title.replace('タイムテーブル', 'My ハシゴテーブル')
+      : `${config.title} My ハシゴテーブル`;
+
+    if (finalLogoUrl) {
+      logoEl.src = finalLogoUrl;
+      logoEl.classList.remove('hidden');
+      modalTitleEl.classList.add('hidden');
+      logoEl.onerror = () => {
+        logoEl.classList.add('hidden');
+        modalTitleEl.classList.remove('hidden');
+        modalTitleEl.innerText = modalTitle;
+      };
+      ticketView.preloadLogo(finalLogoUrl).then(b64 => {
+        if (b64) ticketView.cachedLogoBase64 = b64;
+      });
+    } else {
       logoEl.classList.add('hidden');
       modalTitleEl.classList.remove('hidden');
-      modalTitleEl.innerText = config.title.includes('タイムテーブル')
-        ? config.title.replace('タイムテーブル', 'My ハシゴテーブル')
-        : `${config.title} My ハシゴテーブル`;
-    };
-    ticketView.preloadLogo(finalLogoUrl).then(b64 => {
-      if (b64) ticketView.cachedLogoBase64 = b64;
-    });
+      modalTitleEl.innerText = modalTitle;
+    }
   }
 
   const hashtagEl = document.getElementById('modal-hashtag');

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 現場の自由記述・表記揺れを泥臭く吸収・正規化するファジーパーサー
  */
 export class Parser {
@@ -180,7 +180,7 @@ export class Parser {
       endHour: parseInt((rawConfig['終了時間(hh:mm)'] || '20:00').split(':')[0], 10),
       headerUrl: rawConfig['ヘッダー画像URL'] || rawConfig['背景画像URL'] || '',
       stepMin: parseInt(rawConfig['タイムテーブルの刻み幅(分)'] || '30', 10),
-      logoUrl: rawConfig['ロゴ画像URL'] || './logo.png',
+      logoUrl: rawConfig['ロゴ画像URL'] || '',
       hashtag: rawConfig['SNSハッシュタグ'] || '#ハッシュタグ',
       shareText: rawConfig['SNSシェアテキスト'] || '',
       allowZeroMinTransfer: String(rawConfig['0分移動可否'] || '').trim() === '0分移動OK',
