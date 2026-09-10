@@ -1,0 +1,12 @@
+{
+  "verify-gate": {
+    "enabled": true,
+    "Stop": [
+      {
+        "type": "command",
+        "command": "python scripts/verify_gate.py",
+        "timeout": 20
+      }
+    ]
+  }
+}
