@@ -1,4 +1,4 @@
-﻿import * as htmlToImage from 'html-to-image';
+import * as htmlToImage from 'html-to-image';
 import { Parser } from '../core/Parser.js';
 
 /**
@@ -259,7 +259,7 @@ export class TicketView {
     if (!btn || !area) return;
     const originalText = btn.innerHTML;
 
-    btn.innerHTML = '<span>⏳ 準備中...</span>';
+    btn.innerHTML = '<span>準備中...</span>';
     btn.disabled = true;
 
     try {

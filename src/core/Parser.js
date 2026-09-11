@@ -186,7 +186,7 @@ export class Parser {
       allowZeroMinTransfer: String(rawConfig['0分移動可否'] || '').trim() === '0分移動OK',
       allowSoldOutSelect: String(rawConfig['完売公演の選択可否'] || '').trim() === '選択OK',
       isMaintenance: String(rawConfig['非公開モード'] || '').trim() === '非公開モードON',
-      maintenanceMessage: rawConfig['非公開モード:準備中メッセージ'] || 'タイムテーブルメンテナンス中…⌛️',
+      maintenanceMessage: rawConfig['非公開モード:準備中メッセージ'] || 'タイムテーブルメンテナンス中...',
       numDays: parseInt(rawConfig['開催日数'] || '1', 10),
       dayLabels: [
         rawConfig['1日目のラベル'] || rawConfig['1日目日程名称'] || 'Day 1',

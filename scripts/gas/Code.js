@@ -5,15 +5,15 @@
  * ==========================================================================
  * 
  * 主な機能:
- * 1. 1公演1行の「① 公演かんたん入力」から「② 公演一覧」へ全自動展開
- * 2. ボタンクリック（図形描画ボタン）での直感的一括反映
- * 3. 展開後の「② 公演一覧」での個別編集・完売設定の自由なカスタマイズ対応
- * 4. Web API (doGet) によるJSON自動配信
+ * 1. 1公演1行の「公演かんたん入力」から「公演一覧」へ全自動展開
+ * 2. ボタンクリック（図形描画ボタン）での手動一括反映
+ * 3. 展開後の「公演一覧」での個別編集・完売設定のカスタマイズ対応
+ * 4. Web API (doGet) によるJSON配信
  */
 
 // シート名の定義
-const SHEET_DRAFT = "① 公演かんたん入力";
-const SHEET_MAIN = "② 公演一覧";
+const SHEET_DRAFT = "1.公演かんたん入力";
+const SHEET_MAIN = "2.公演一覧";
 const SHEET_CONFIG = "設定";
 
 /**
@@ -21,10 +21,10 @@ const SHEET_CONFIG = "設定";
  */
 function onOpen() {
   const ui = SpreadsheetApp.getUi();
-  ui.createMenu("🚀 タイムテーブル便利機能")
-    .addItem("✨ 【初回】入力シートをセットアップする", "setupDraftSheet")
+  ui.createMenu("タイムテーブル連携")
+    .addItem("【初回】入力シートをセットアップする", "setupDraftSheet")
     .addSeparator()
-    .addItem("⚡ 公演一覧へ反映する（ボタン割り当て用）", "expandDraftToTimetable")
+    .addItem("公演一覧へ反映する（ボタン割り当て用）", "expandDraftToTimetable")
     .addToUi();
 }
 
@@ -35,7 +35,10 @@ function setupDraftSheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   
   // 旧シート名があればリネーム、無ければ新規作成
-  let draftSheet = ss.getSheetByName(SHEET_DRAFT) || ss.getSheetByName("📝入力補助シート");
+  let draftSheet = ss.getSheetByName(SHEET_DRAFT) || 
+                   ss.getSheetByName("① 公演かんたん入力") || 
+                   ss.getSheetByName("入力補助シート") ||
+                   ss.getSheetByName("\uD83D\uDCDD入力補助シート");
   if (!draftSheet) {
     draftSheet = ss.insertSheet(SHEET_DRAFT, 0);
   } else {
@@ -44,7 +47,7 @@ function setupDraftSheet() {
 
   // 1行目: 操作コントロール・ボタン配置用バナー
   draftSheet.getRange("A1:C1").merge()
-    .setValue("🎪 公演かんたん入力")
+    .setValue("公演かんたん入力")
     .setBackground("#1e3a8a")
     .setFontColor("#ffffff")
     .setFontWeight("bold")
@@ -52,7 +55,7 @@ function setupDraftSheet() {
     .setVerticalAlignment("middle");
 
   draftSheet.getRange("D1:F1").merge()
-    .setValue("【ここにボタンを配置】")
+    .setValue("【ボタン配置エリア】")
     .setBackground("#dbeafe")
     .setFontColor("#1e40af")
     .setFontWeight("bold")
@@ -60,7 +63,7 @@ function setupDraftSheet() {
     .setVerticalAlignment("middle");
 
   draftSheet.getRange("G1:S1").merge()
-    .setValue("👈 入力が終わったら左のボタンを押すと「② 公演一覧」へ一括反映されます（※スクロールしても常に固定表示）")
+    .setValue("入力完了後、左のボタンを押すと「2.公演一覧」へ一括反映されます（スクロール時も常時固定表示）")
     .setBackground("#f8fafc")
     .setFontColor("#64748b")
     .setFontSize(9)
@@ -128,10 +131,12 @@ function setupDraftSheet() {
 
   // 列幅の自動調整
   draftSheet.autoResizeColumns(1, headers.length);
-  draftSheet.setColumnWidth(5, 260); // 時間リストは見やすく広めに
+  draftSheet.setColumnWidth(5, 260);
 
-  // 「② 公演一覧」シートも存在確認またはリネーム
-  let mainSheet = ss.getSheetByName(SHEET_MAIN) || ss.getSheetByName("公演一覧");
+  // 「2.公演一覧」シートも存在確認またはリネーム
+  let mainSheet = ss.getSheetByName(SHEET_MAIN) || 
+                  ss.getSheetByName("② 公演一覧") || 
+                  ss.getSheetByName("公演一覧");
   if (!mainSheet) {
     mainSheet = ss.insertSheet(SHEET_MAIN, 1);
   } else {
@@ -139,33 +144,38 @@ function setupDraftSheet() {
   }
 
   SpreadsheetApp.getUi().alert(
-    "✨ セットアップ完了！",
-    "「" + SHEET_DRAFT + "」シートをセットアップしました！\n\n" +
-    "【次のステップ: ボタンの設置】\n" +
-    "1. スプレッドシートのメニュー「挿入」>「描画」をクリック\n" +
-    "2. 四角形を描いて「⚡ 公演一覧に反映する」と入力し「保存して閉じる」\n" +
-    "3. ボタンをD1セルの位置に配置し、右上の「︙」から「スクリプトを割り当て」を選択\n" +
-    "4. 「expandDraftToTimetable」と入力すれば、いつでもボタン1発で反映できるようになります！",
+    "セットアップ完了",
+    "「" + SHEET_DRAFT + "」シートをセットアップしました。\n\n" +
+    "【ボタンの設置手順】\n" +
+    "1. メニューの「挿入」>「描画」をクリック\n" +
+    "2. 四角形を描き、「公演一覧に反映する」と入力して「保存して閉じる」\n" +
+    "3. ボタンをD1セルの位置に配置し、右上のメニューから「スクリプトを割り当て」を選択\n" +
+    "4. 「expandDraftToTimetable」と入力して確定してください。",
     SpreadsheetApp.getUi().ButtonSet.OK
   );
 }
 
 /**
- * 入力シートのデータを「② 公演一覧」シートへ展開
+ * 入力シートのデータを「2.公演一覧」シートへ展開
  * （図形描画ボタンまたはメニューから呼び出されます）
  */
 function expandDraftToTimetable() {
   const ui = SpreadsheetApp.getUi();
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   
-  const draftSheet = ss.getSheetByName(SHEET_DRAFT) || ss.getSheetByName("📝入力補助シート");
+  const draftSheet = ss.getSheetByName(SHEET_DRAFT) || 
+                     ss.getSheetByName("① 公演かんたん入力") || 
+                     ss.getSheetByName("入力補助シート") ||
+                     ss.getSheetByName("\uD83D\uDCDD入力補助シート");
   if (!draftSheet) {
-    ui.alert("⚠️ 「" + SHEET_DRAFT + "」シートが見つかりません。先に【初回セットアップ】を実行してください。");
+    ui.alert("「" + SHEET_DRAFT + "」シートが見つかりません。先に初期セットアップを実行してください。");
     return;
   }
 
   // 本番シートの取得（なければ作成）
-  let mainSheet = ss.getSheetByName(SHEET_MAIN) || ss.getSheetByName("公演一覧");
+  let mainSheet = ss.getSheetByName(SHEET_MAIN) || 
+                  ss.getSheetByName("② 公演一覧") || 
+                  ss.getSheetByName("公演一覧");
   if (!mainSheet) {
     mainSheet = ss.insertSheet(SHEET_MAIN, 1);
   } else {
@@ -174,7 +184,7 @@ function expandDraftToTimetable() {
 
   const lastRow = draftSheet.getLastRow();
   if (lastRow <= 2) {
-    ui.alert("⚠️ 「" + SHEET_DRAFT + "」シートに公演データが入力されていません。3行目以降に入力してください。");
+    ui.alert("「" + SHEET_DRAFT + "」シートに公演データが入力されていません。3行目以降に入力してください。");
     return;
   }
 
@@ -182,8 +192,8 @@ function expandDraftToTimetable() {
   const res = ui.alert(
     "公演一覧への反映確認",
     "「" + SHEET_DRAFT + "」の内容を「" + SHEET_MAIN + "」へ展開します。\n\n" +
-    "⚠️ 【ご注意】\n" +
-    "「" + SHEET_MAIN + "」シートに直接書き込んだ完売設定や微調整は上書きされます。\n" +
+    "【ご注意】\n" +
+    "「" + SHEET_MAIN + "」シートで個別に修正した内容（完売設定など）は上書きされます。\n" +
     "反映を実行してよろしいですか？",
     ui.ButtonSet.YES_NO
   );
@@ -286,13 +296,13 @@ function expandDraftToTimetable() {
 
   mainSheet.autoResizeColumns(1, mainHeaders.length);
 
-  // 展開後、「② 公演一覧」シートを前面に表示
+  // 展開後、「2.公演一覧」シートを前面に表示
   ss.setActiveSheet(mainSheet);
 
   ui.alert(
-    "🎉 反映完了！",
-    draftData.filter(r => r[2]).length + " 件の公演情報から、計 " + expandedRows.length + " 行のタイムテーブルデータを「" + SHEET_MAIN + "」へ展開しました！\n\n" +
-    "💡 必要に応じて、この「" + SHEET_MAIN + "」シートで公演回ごとの完売設定や微調整を行ってください。",
+    "反映完了",
+    draftData.filter(r => r[2]).length + " 件の公演情報から、計 " + expandedRows.length + " 行のタイムテーブルデータを「" + SHEET_MAIN + "」へ展開しました。\n\n" +
+    "必要に応じて、この「" + SHEET_MAIN + "」シートで公演回ごとの完売設定や微調整を行ってください。",
     ui.ButtonSet.OK
   );
 }
@@ -316,8 +326,10 @@ function doGet() {
     });
   }
 
-  // 2. 公演一覧シートの読み込み（② 公演一覧 または 公演一覧）
-  const mainSheet = ss.getSheetByName(SHEET_MAIN) || ss.getSheetByName("公演一覧");
+  // 2. 公演一覧シートの読み込み
+  const mainSheet = ss.getSheetByName(SHEET_MAIN) || 
+                    ss.getSheetByName("② 公演一覧") || 
+                    ss.getSheetByName("公演一覧");
   const shows = [];
   
   if (mainSheet && mainSheet.getLastRow() > 1) {
