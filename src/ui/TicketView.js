@@ -163,6 +163,80 @@ export class TicketView {
     }
   }
 
+  /**
+   * チケット画像（Blob）の共通生成処理
+   */
+  async createPassBlob(area) {
+    await document.fonts.ready;
+    await new Promise(resolve => setTimeout(resolve, 200));
+
+    const targetHeight = area.scrollHeight;
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const logoImg = area.querySelector('img');
+
+    // iOSかつロゴ画像が存在する場合のCanvas後合成処理（透過PNGバグ回避）
+    if (isIOS && logoImg && logoImg.src && !logoImg.classList.contains('hidden')) {
+      const b64 = this.cachedLogoBase64 || await this.preloadLogo(logoImg.src);
+      const originalOpacity = logoImg.style.opacity;
+      logoImg.style.opacity = '0';
+
+      const canvas = await htmlToImage.toCanvas(area, {
+        quality: 1.0,
+        pixelRatio: 3,
+        cacheBust: true,
+        height: targetHeight,
+        style: {
+          overflow: 'visible',
+          maxHeight: 'none',
+          height: `${targetHeight}px`,
+          borderRadius: '2.5rem'
+        }
+      });
+
+      logoImg.style.opacity = originalOpacity;
+
+      if (b64) {
+        const imgObj = new Image();
+        await new Promise(resolve => {
+          imgObj.onload = () => resolve(true);
+          imgObj.onerror = () => resolve(false);
+          imgObj.src = b64;
+        });
+
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          const ratio = 3;
+          const areaRect = area.getBoundingClientRect();
+          const logoRect = logoImg.getBoundingClientRect();
+          const drawX = (logoRect.left - areaRect.left + area.scrollLeft) * ratio;
+          const drawY = (logoRect.top - areaRect.top + area.scrollTop) * ratio;
+          const drawW = logoRect.width * ratio;
+          const drawH = logoRect.height * ratio;
+          ctx.drawImage(imgObj, drawX, drawY, drawW, drawH);
+        }
+      }
+
+      return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    }
+
+    // Android / PC / ロゴなし環境
+    return htmlToImage.toBlob(area, {
+      quality: 1.0,
+      pixelRatio: 3,
+      cacheBust: true,
+      height: targetHeight,
+      style: {
+        overflow: 'visible',
+        maxHeight: 'none',
+        height: `${targetHeight}px`,
+        borderRadius: '2.5rem'
+      }
+    });
+  }
+
+  /**
+   * 画像保存処理
+   */
   async downloadImage() {
     const btn = document.getElementById('download-btn');
     const area = document.getElementById('capture-area');
@@ -173,79 +247,18 @@ export class TicketView {
     btn.disabled = true;
 
     try {
-      await document.fonts.ready;
-      await new Promise(resolve => setTimeout(resolve, 300));
+      const blob = await this.createPassBlob(area);
+      if (!blob) throw new Error('画像の生成に失敗しました。');
 
-      const targetHeight = area.scrollHeight;
-      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-      const logoImg = area.querySelector('img');
-
-      if (isIOS && logoImg) {
-        const b64 = this.cachedLogoBase64 || await this.preloadLogo(logoImg.src);
-        const originalOpacity = logoImg.style.opacity;
-        logoImg.style.opacity = '0';
-
-        const canvas = await htmlToImage.toCanvas(area, {
-          quality: 1.0,
-          pixelRatio: 3,
-          cacheBust: true,
-          height: targetHeight,
-          style: {
-            overflow: 'visible',
-            maxHeight: 'none',
-            height: `${targetHeight}px`,
-            borderRadius: '2.5rem'
-          }
-        });
-
-        logoImg.style.opacity = originalOpacity;
-
-        if (b64) {
-          const imgObj = new Image();
-          await new Promise(resolve => {
-            imgObj.onload = () => resolve(true);
-            imgObj.onerror = () => resolve(false);
-            imgObj.src = b64;
-          });
-
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            const ratio = 3;
-            const areaRect = area.getBoundingClientRect();
-            const logoRect = logoImg.getBoundingClientRect();
-            const drawX = (logoRect.left - areaRect.left + area.scrollLeft) * ratio;
-            const drawY = (logoRect.top - areaRect.top + area.scrollTop) * ratio;
-            const drawW = logoRect.width * ratio;
-            const drawH = logoRect.height * ratio;
-            ctx.drawImage(imgObj, drawX, drawY, drawW, drawH);
-          }
-        }
-
-        const dataUrl = canvas.toDataURL('image/png', 1.0);
-        const link = document.createElement('a');
-        link.download = `my-hashigo-pass-${this.config.date || 'fes'}.png`;
-        link.href = dataUrl;
-        link.click();
-      } else {
-        const dataUrl = await htmlToImage.toPng(area, {
-          quality: 1.0,
-          pixelRatio: 3,
-          cacheBust: true,
-          height: targetHeight,
-          style: {
-            overflow: 'visible',
-            maxHeight: 'none',
-            height: `${targetHeight}px`,
-            borderRadius: '2.5rem'
-          }
-        });
-        const link = document.createElement('a');
-        link.download = `my-hashigo-pass-${this.config.date || 'fes'}.png`;
-        link.href = dataUrl;
-        link.click();
-      }
+      const fileName = `my-hashigo-pass-${this.config.date || 'fes'}.png`;
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.download = fileName;
+      link.href = objectUrl;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 10000);
     } catch (error) {
-      console.error('画像生成エラー:', error);
+      console.error('画像保存エラー:', error);
       alert('保存に失敗しました。詳細: ' + error.message);
     } finally {
       btn.innerHTML = originalText;
@@ -253,101 +266,114 @@ export class TicketView {
     }
   }
 
+  /**
+   * SNSシェア処理（iOS / Android / PC 最適化）
+   */
   async shareImage() {
     const btn = document.getElementById('share-btn');
     const area = document.getElementById('capture-area');
+    const guideContainer = document.getElementById('ios-share-guide');
     if (!btn || !area) return;
     const originalText = btn.innerHTML;
 
-    btn.innerHTML = '<span>準備中...</span>';
+    btn.innerHTML = '<span>画像生成中...</span>';
     btn.disabled = true;
+    if (guideContainer) {
+      guideContainer.classList.add('hidden');
+      guideContainer.innerHTML = '';
+    }
 
     try {
-      await document.fonts.ready;
-      await new Promise(resolve => setTimeout(resolve, 300));
+      const blob = await this.createPassBlob(area);
+      if (!blob) throw new Error('画像の生成に失敗しました。');
 
-      const targetHeight = area.scrollHeight;
-      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-      const logoImg = area.querySelector('img');
-
-      let blob;
-      if (isIOS && logoImg) {
-        const b64 = this.cachedLogoBase64 || await this.preloadLogo(logoImg.src);
-        const originalOpacity = logoImg.style.opacity;
-        logoImg.style.opacity = '0';
-
-        const canvas = await htmlToImage.toCanvas(area, {
-          quality: 1.0,
-          pixelRatio: 3,
-          cacheBust: true,
-          height: targetHeight,
-          style: {
-            overflow: 'visible',
-            maxHeight: 'none',
-            height: `${targetHeight}px`,
-            borderRadius: '2.5rem'
-          }
-        });
-
-        logoImg.style.opacity = originalOpacity;
-
-        if (b64) {
-          const imgObj = new Image();
-          await new Promise(resolve => {
-            imgObj.onload = () => resolve(true);
-            imgObj.onerror = () => resolve(false);
-            imgObj.src = b64;
-          });
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            const ratio = 3;
-            const areaRect = area.getBoundingClientRect();
-            const logoRect = logoImg.getBoundingClientRect();
-            const drawX = (logoRect.left - areaRect.left + area.scrollLeft) * ratio;
-            const drawY = (logoRect.top - areaRect.top + area.scrollTop) * ratio;
-            const drawW = logoRect.width * ratio;
-            const drawH = logoRect.height * ratio;
-            ctx.drawImage(imgObj, drawX, drawY, drawW, drawH);
-          }
-        }
-
-        blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-      } else {
-        blob = await htmlToImage.toBlob(area, {
-          quality: 1.0,
-          pixelRatio: 3,
-          cacheBust: true,
-          height: targetHeight,
-          style: {
-            overflow: 'visible',
-            maxHeight: 'none',
-            height: `${targetHeight}px`,
-            borderRadius: '2.5rem'
-          }
-        });
-      }
-
+      const fileName = `my-hashigo-pass-${this.config.date || 'fes'}.png`;
       const defaultText = `${this.config.title || 'ハシゴ計画'}のスケジュールを作成しました！`;
-      const shareText = `${this.config.shareText || defaultText}\n${this.config.hashtag || ''}\n${window.location.href}`;
+      const baseText = this.config.shareText || defaultText;
+      const hashtag = this.config.hashtag ? `${this.config.hashtag}\n` : '';
+      const shareText = `${baseText}\n${hashtag}${window.location.href}`;
+      const xIntentUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
 
-      if (navigator.share && navigator.canShare && blob) {
-        const file = new File([blob], `my-hashigo-pass-${this.config.date || 'fes'}.png`, { type: 'image/png' });
+      const ua = navigator.userAgent || '';
+      const isIOS = /iPhone|iPad|iPod/i.test(ua);
+      const isAndroid = /Android/i.test(ua);
+
+      // 1. iOS環境:
+      // iOS Safariでは Web Share API で画像とテキストを同時送信するとXアプリ側でテキストが破棄される仕様上の問題、
+      // および重いレンダリング処理後の navigator.share が User Activation 失効でブロックされる問題があるため、
+      // 画像を自動ダウンロードしつつ、確実にX投稿画面へ誘導する。
+      if (isIOS) {
+        const objectUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.download = fileName;
+        link.href = objectUrl;
+        link.click();
+
+        if (guideContainer) {
+          guideContainer.innerHTML = `
+            <div class="text-xs font-bold text-slate-800 leading-normal text-left">
+              画像をダウンロードしました。<br>
+              下のボタンからXを開き、保存した画像を添付してポストしてください。<br>
+              <span class="text-[10px] text-slate-500">※自動保存されない場合は、下のプレビュー画像を長押しして「写真に追加」してください。</span>
+            </div>
+            <img src="${objectUrl}" alt="Pass Preview" class="max-h-40 mx-auto rounded-xl shadow-md border border-slate-200 object-contain my-1">
+            <a href="${xIntentUrl}" target="_blank" rel="noopener noreferrer"
+              class="w-full bg-black text-white py-3 rounded-xl font-bold text-sm shadow-md active:scale-95 transition-all flex justify-center items-center gap-2">
+              <span>Xを開いてポストする</span>
+            </a>
+          `;
+          guideContainer.classList.remove('hidden');
+          guideContainer.scrollIntoView({ behavior: 'smooth' });
+        }
+        return;
+      }
+
+      // 2. Android環境（Web Share API によるダイレクト共有）
+      if (isAndroid && navigator.share && navigator.canShare) {
+        const file = new File([blob], fileName, { type: 'image/png' });
         if (navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            files: [file],
-            text: shareText
-          });
-          return;
+          try {
+            await navigator.share({
+              files: [file],
+              text: shareText
+            });
+            return;
+          } catch (shareErr) {
+            if (shareErr.name === 'AbortError') return;
+            console.warn('Web Share共有中断または失敗:', shareErr);
+          }
         }
       }
 
-      // Web Share 非対応時: Twitter/X インテント起動 + 画像DL
-      const xUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
-      window.open(xUrl, '_blank');
-      this.downloadImage();
+      // 3. PC環境（クリップボードコピー + Xインテント起動）
+      try {
+        if (navigator.clipboard && window.ClipboardItem) {
+          const item = new ClipboardItem({ [blob.type]: blob });
+          await navigator.clipboard.write([item]);
+          alert('画像をクリップボードにコピーしました。\nOKを押すとXの投稿画面が開きますので、投稿欄に貼り付け（Ctrl+V / Cmd+V）してください。');
+        } else {
+          const objectUrl = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.download = fileName;
+          link.href = objectUrl;
+          link.click();
+          setTimeout(() => URL.revokeObjectURL(objectUrl), 10000);
+        }
+      } catch (clipErr) {
+        console.warn('クリップボード非対応:', clipErr);
+        const objectUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.download = fileName;
+        link.href = objectUrl;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(objectUrl), 10000);
+      }
+
+      window.open(xIntentUrl, '_blank');
+
     } catch (error) {
-      console.error('シェアエラー:', error);
-      alert('共有に失敗しました。詳細: ' + error.message);
+      console.error('シェア処理エラー:', error);
+      alert('画像の生成または共有に失敗しました。詳細: ' + error.message);
     } finally {
       btn.innerHTML = originalText;
       btn.disabled = false;
