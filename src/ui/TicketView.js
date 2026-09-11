@@ -174,6 +174,16 @@ export class TicketView {
     const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
     const logoImg = area.querySelector('img');
 
+    const filterFn = (node) => {
+      if (node.tagName === 'IMG') {
+        const src = node.getAttribute('src');
+        if (!src || src.trim() === '' || node.classList.contains('hidden') || node.style.display === 'none') {
+          return false;
+        }
+      }
+      return true;
+    };
+
     // iOSかつロゴ画像が存在する場合のCanvas後合成処理（透過PNGバグ回避）
     if (isIOS && logoImg && logoImg.src && !logoImg.classList.contains('hidden')) {
       const b64 = this.cachedLogoBase64 || await this.preloadLogo(logoImg.src);
@@ -184,6 +194,8 @@ export class TicketView {
         quality: 1.0,
         pixelRatio: 3,
         cacheBust: true,
+        skipFonts: true,
+        filter: filterFn,
         height: targetHeight,
         style: {
           overflow: 'visible',
@@ -224,6 +236,8 @@ export class TicketView {
       quality: 1.0,
       pixelRatio: 3,
       cacheBust: true,
+      skipFonts: true,
+      filter: filterFn,
       height: targetHeight,
       style: {
         overflow: 'visible',
