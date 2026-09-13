@@ -17,6 +17,16 @@ const SHEET_MAIN = "2.公演一覧";
 const SHEET_CONFIG = "設定";
 
 /**
+ * 公演データが格納された本番シートを取得（過去のシート名「公演データ」にも完全互換対応）
+ */
+function getMainSheet(ss) {
+  return ss.getSheetByName(SHEET_MAIN) || 
+         ss.getSheetByName("② 公演一覧") || 
+         ss.getSheetByName("公演一覧") || 
+         ss.getSheetByName("公演データ");
+}
+
+/**
  * スプレッドシートを開いたときにメニューを追加
  */
 function onOpen() {
@@ -122,21 +132,34 @@ function setupDraftSheet() {
     draftSheet.getRange(3, 1, sampleRows.length, sampleRows[0].length).setValues(sampleRows);
   }
 
-  // 予約形式のプルダウン設定
+  // プルダウン設定（手動設定不要で自動付与）
+  // 1. 日程 (A列)
+  const ruleDay = SpreadsheetApp.newDataValidation()
+    .requireValueInList(["1日目", "2日目", "3日目"], true)
+    .setAllowInvalid(true)
+    .build();
+  draftSheet.getRange("A3:A200").setDataValidation(ruleDay);
+
+  // 2. 予約形式 (I列)
   const ruleType = SpreadsheetApp.newDataValidation()
     .requireValueInList(["事前予約", "当日受付(ファミレス式)", "事前予約(時間自由)"], true)
     .setAllowInvalid(true)
     .build();
-  draftSheet.getRange("I3:I100").setDataValidation(ruleType);
+  draftSheet.getRange("I3:I200").setDataValidation(ruleType);
+
+  // 3. 難易度 (J列)
+  const ruleDiff = SpreadsheetApp.newDataValidation()
+    .requireValueInList(["-", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "未定"], true)
+    .setAllowInvalid(true)
+    .build();
+  draftSheet.getRange("J3:J200").setDataValidation(ruleDiff);
 
   // 列幅の自動調整
   draftSheet.autoResizeColumns(1, headers.length);
   draftSheet.setColumnWidth(5, 260);
 
   // 「2.公演一覧」シートも存在確認またはリネーム
-  let mainSheet = ss.getSheetByName(SHEET_MAIN) || 
-                  ss.getSheetByName("② 公演一覧") || 
-                  ss.getSheetByName("公演一覧");
+  let mainSheet = getMainSheet(ss);
   if (!mainSheet) {
     mainSheet = ss.insertSheet(SHEET_MAIN, 1);
   } else {
@@ -172,10 +195,8 @@ function expandDraftToTimetable() {
     return;
   }
 
-  // 本番シートの取得（なければ作成）
-  let mainSheet = ss.getSheetByName(SHEET_MAIN) || 
-                  ss.getSheetByName("② 公演一覧") || 
-                  ss.getSheetByName("公演一覧");
+  // 本番シートの取得（なければ作成、既存があれば名前を統一）
+  let mainSheet = getMainSheet(ss);
   if (!mainSheet) {
     mainSheet = ss.insertSheet(SHEET_MAIN, 1);
   } else {
@@ -284,14 +305,37 @@ function expandDraftToTimetable() {
   mainSheet.setFrozenRows(1);
 
   if (expandedRows.length > 0) {
-    mainSheet.getRange(2, 1, expandedRows.length, mainHeaders.length).setValues(expandedRows);
+    const rowCount = expandedRows.length;
+    mainSheet.getRange(2, 1, rowCount, mainHeaders.length).setValues(expandedRows);
     
-    // 完売設定のプルダウン（警告のみ・編集可能）
+    // プルダウン設定（展開後の公演一覧でも手動設定不要で自動付与）
+    // 1. 日程 (A列)
+    const ruleDay = SpreadsheetApp.newDataValidation()
+      .requireValueInList(["1日目", "2日目", "3日目"], true)
+      .setAllowInvalid(true)
+      .build();
+    mainSheet.getRange(2, 1, rowCount, 1).setDataValidation(ruleDay);
+
+    // 2. 完売設定 (J列)
     const ruleSoldOut = SpreadsheetApp.newDataValidation()
       .requireValueInList(["完売", "SOLD OUT", "空席あり"], true)
       .setAllowInvalid(true)
       .build();
-    mainSheet.getRange(2, 10, expandedRows.length, 1).setDataValidation(ruleSoldOut);
+    mainSheet.getRange(2, 10, rowCount, 1).setDataValidation(ruleSoldOut);
+
+    // 3. 予約形式 (L列)
+    const ruleType = SpreadsheetApp.newDataValidation()
+      .requireValueInList(["事前予約", "当日受付(ファミレス式)", "事前予約(時間自由)"], true)
+      .setAllowInvalid(true)
+      .build();
+    mainSheet.getRange(2, 12, rowCount, 1).setDataValidation(ruleType);
+
+    // 4. 難易度 (M列)
+    const ruleDiff = SpreadsheetApp.newDataValidation()
+      .requireValueInList(["-", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "未定"], true)
+      .setAllowInvalid(true)
+      .build();
+    mainSheet.getRange(2, 13, rowCount, 1).setDataValidation(ruleDiff);
   }
 
   mainSheet.autoResizeColumns(1, mainHeaders.length);
@@ -326,10 +370,8 @@ function doGet() {
     });
   }
 
-  // 2. 公演一覧シートの読み込み
-  const mainSheet = ss.getSheetByName(SHEET_MAIN) || 
-                    ss.getSheetByName("② 公演一覧") || 
-                    ss.getSheetByName("公演一覧");
+  // 2. 公演一覧シートの読み込み（過去の「公演データ」シート名にも完全互換対応）
+  const mainSheet = getMainSheet(ss);
   const shows = [];
   
   if (mainSheet && mainSheet.getLastRow() > 1) {
