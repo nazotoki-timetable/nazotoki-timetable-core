@@ -23,6 +23,17 @@ export class Storage {
     }
   }
 
+  static loadPlan(eventId) {
+    try {
+      const raw = localStorage.getItem(`plan_${eventId}`);
+      if (!raw) return [];
+      return JSON.parse(raw);
+    } catch (e) {
+      console.warn('Failed to load plan from localStorage:', e);
+      return [];
+    }
+  }
+
   static saveTimetableCache(data) {
     try {
       localStorage.setItem('saiensai16_timetable_cache', JSON.stringify(data));

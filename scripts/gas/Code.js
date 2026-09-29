@@ -35,6 +35,10 @@ function onOpen() {
     .addItem("【初回】入力シートをセットアップする", "setupDraftSheet")
     .addSeparator()
     .addItem("公演一覧へ反映する（ボタン割り当て用）", "expandDraftToTimetable")
+    .addItem("Web公開用JSONをGitHubへ同期", "manualExportJsonToGitHub")
+    .addSeparator()
+    .addItem("GitHubアクセストークンを設定", "setupGitHubToken")
+    .addItem("GitHubアクセストークンを削除", "clearGitHubToken")
     .addToUi();
 }
 
@@ -164,6 +168,23 @@ function setupDraftSheet() {
     mainSheet = ss.insertSheet(SHEET_MAIN, 1);
   } else {
     mainSheet.setName(SHEET_MAIN);
+  }
+
+  // 「設定」シートのGitHub連携キーの初期配置
+  const configSheet = ss.getSheetByName(SHEET_CONFIG);
+  if (configSheet) {
+    const configData = configSheet.getDataRange().getValues();
+    const existingKeys = new Set(configData.map(r => String(r[0] || "").trim()));
+    const gitHubDefaults = [
+      ["GitHubリポジトリ", "", "例: owner/repo-name (Web公開JSON同期用)"],
+      ["GitHubブランチ", "main", "同期先ブランチ名"],
+      ["GitHub保存先パス", "public/data.json", "リポジトリ内の保存パス"]
+    ];
+    gitHubDefaults.forEach(def => {
+      if (!existingKeys.has(def[0])) {
+        configSheet.appendRow([def[0], def[1], def[2]]);
+      }
+    });
   }
 
   SpreadsheetApp.getUi().alert(
@@ -349,14 +370,15 @@ function expandDraftToTimetable() {
     "必要に応じて、この「" + SHEET_MAIN + "」シートで公演回ごとの完売設定や微調整を行ってください。",
     ui.ButtonSet.OK
   );
+
+  // GitHub連携が設定されている場合は静的JSONを自動同期
+  exportJsonToGitHub(true);
 }
 
 /**
- * Web API (doGet) - WebサイトへのJSONデータ配信
+ * スプレッドシートから最新のJSON用データ構造を生成
  */
-function doGet() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  
+function generateExportData(ss) {
   // 1. 設定シートの読み込み
   const configSheet = ss.getSheetByName(SHEET_CONFIG);
   const config = {};
@@ -402,11 +424,189 @@ function doGet() {
     }
   }
 
-  const result = {
+  return {
     config: config,
     shows: shows
   };
+}
 
-  return ContentService.createTextOutput(JSON.stringify(result))
+/**
+ * Web API (doGet) - WebサイトへのJSONデータ配信（フォールバック用）
+ */
+function doGet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const result = generateExportData(ss);
+
+  return ContentService.createTextOutput(JSON.stringify(result, null, 2))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+/**
+ * GitHubアクセストークン（PAT）の設定
+ */
+function setupGitHubToken() {
+  const ui = SpreadsheetApp.getUi();
+  const prop = PropertiesService.getScriptProperties();
+  const currentToken = prop.getProperty("GITHUB_PAT");
+  const promptMsg = currentToken
+    ? "現在GitHubアクセストークンが保存されています。\n新しいトークンを入力すると上書き更新されます:"
+    : "GitHub Personal Access Token (PAT) を入力してください。\n（必要な権限: 対象リポジトリの Contents: Read and write）:";
+
+  const res = ui.prompt("GitHubアクセストークン設定", promptMsg, ui.ButtonSet.OK_CANCEL);
+  if (res.getSelectedButton() === ui.Button.OK) {
+    const token = res.getResponseText().trim();
+    if (token) {
+      prop.setProperty("GITHUB_PAT", token);
+      ui.alert("設定完了", "アクセストークンを安全にスクリプトプロパティへ保存しました。", ui.ButtonSet.OK);
+    } else {
+      ui.alert("未入力", "トークンが入力されなかったため設定を保持しました。", ui.ButtonSet.OK);
+    }
+  }
+}
+
+/**
+ * GitHubアクセストークン（PAT）の削除
+ */
+function clearGitHubToken() {
+  const ui = SpreadsheetApp.getUi();
+  const res = ui.alert("確認", "保存されているGitHubアクセストークンを削除しますか？", ui.ButtonSet.YES_NO);
+  if (res === ui.Button.YES) {
+    PropertiesService.getScriptProperties().deleteProperty("GITHUB_PAT");
+    ui.alert("削除完了", "アクセストークンを削除しました。", ui.ButtonSet.OK);
+  }
+}
+
+/**
+ * メニュー用：Web公開用JSONの手動同期実行
+ */
+function manualExportJsonToGitHub() {
+  exportJsonToGitHub(false);
+}
+
+/**
+ * スプレッドシートのデータを静的JSONとしてGitHubリポジトリへ直接コミット・同期
+ * @param {boolean} isSilent - 自動同期時はtrue（エラーダイアログを抑制）
+ */
+function exportJsonToGitHub(isSilent) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ui = SpreadsheetApp.getUi();
+  const prop = PropertiesService.getScriptProperties();
+  let token = prop.getProperty("GITHUB_PAT");
+
+  // トークン未設定時
+  if (!token) {
+    if (isSilent) return;
+    const res = ui.prompt(
+      "GitHubアクセストークンが必要です",
+      "GitHub Personal Access Token (PAT) が設定されていません。\nトークンを入力してください（Contents: Read & write権限）:",
+      ui.ButtonSet.OK_CANCEL
+    );
+    if (res.getSelectedButton() !== ui.Button.OK) return;
+    token = res.getResponseText().trim();
+    if (!token) return;
+    prop.setProperty("GITHUB_PAT", token);
+  }
+
+  // 設定シートからGitHubリポジトリ設定を取得
+  const configSheet = ss.getSheetByName(SHEET_CONFIG);
+  let repo = "";
+  let branch = "main";
+  let filePath = "public/data.json";
+
+  if (configSheet) {
+    const data = configSheet.getDataRange().getValues();
+    data.forEach(row => {
+      const key = String(row[0] || "").trim();
+      const val = String(row[1] !== undefined ? row[1] : "").trim();
+      if (key === "GitHubリポジトリ" && val) repo = val;
+      if (key === "GitHubブランチ" && val) branch = val;
+      if (key === "GitHub保存先パス" && val) filePath = val;
+    });
+  }
+
+  if (!repo) {
+    if (isSilent) return;
+    ui.alert(
+      "設定エラー",
+      "「" + SHEET_CONFIG + "」シートに「GitHubリポジトリ」（例: owner/repo-name）が設定されていません。\n設定シートに入力してから再度実行してください。",
+      ui.ButtonSet.OK
+    );
+    return;
+  }
+
+  try {
+    // 1. 最新JSONデータの生成
+    const exportData = generateExportData(ss);
+    const jsonString = JSON.stringify(exportData, null, 2);
+    const base64Content = Utilities.base64Encode(jsonString, Utilities.Charset.UTF_8);
+
+    // 2. 既存ファイルのSHAを取得（GitHub APIでのファイル更新に必須）
+    const apiUrl = "https://api.github.com/repos/" + repo + "/contents/" + filePath + "?ref=" + branch;
+    const headers = {
+      "Authorization": "token " + token,
+      "Accept": "application/vnd.github+json",
+      "User-Agent": "Universal-Timetable-GAS"
+    };
+
+    let existingSha = null;
+    try {
+      const getRes = UrlFetchApp.fetch(apiUrl, {
+        method: "get",
+        headers: headers,
+        muteHttpExceptions: true
+      });
+      const getCode = getRes.getResponseCode();
+      if (getCode === 200) {
+        const fileJson = JSON.parse(getRes.getContentText());
+        existingSha = fileJson.sha;
+      }
+    } catch (err) {
+      console.warn("既存ファイルSHA取得失敗（新規作成として処理します）:", err);
+    }
+
+    // 3. GitHub API (PUT) でファイルを直接コミット
+    const putPayload = {
+      message: "data: タイムテーブルデータをスプレッドシートから自動同期",
+      content: base64Content,
+      branch: branch
+    };
+    if (existingSha) {
+      putPayload.sha = existingSha;
+    }
+
+    const putUrl = "https://api.github.com/repos/" + repo + "/contents/" + filePath;
+    const putRes = UrlFetchApp.fetch(putUrl, {
+      method: "put",
+      headers: headers,
+      contentType: "application/json",
+      payload: JSON.stringify(putPayload),
+      muteHttpExceptions: true
+    });
+
+    const putCode = putRes.getResponseCode();
+    if (putCode === 200 || putCode === 201) {
+      if (!isSilent) {
+        ui.alert(
+          "GitHub同期完了",
+          "リポジトリ「" + repo + "」（" + branch + " ブランチ）の " + filePath + " へ最新データを保存しました。\nWebサイト側が初回から0.1秒台で高速表示されます。",
+          ui.ButtonSet.OK
+        );
+      }
+    } else {
+      const errorText = putRes.getContentText();
+      console.error("GitHub API エラー:", putCode, errorText);
+      if (!isSilent) {
+        ui.alert(
+          "GitHub同期エラー (HTTP " + putCode + ")",
+          "同期に失敗しました。\n詳細: " + errorText,
+          ui.ButtonSet.OK
+        );
+      }
+    }
+  } catch (e) {
+    console.error("GitHub同期例外:", e);
+    if (!isSilent) {
+      ui.alert("同期処理例外", "処理中にエラーが発生しました: " + e.message, ui.ButtonSet.OK);
+    }
+  }
 }

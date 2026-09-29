@@ -1,3 +1,4 @@
+import { StaticJsonAdapter } from './adapters/StaticJsonAdapter.js';
 import { GasAdapter } from './adapters/GasAdapter.js';
 import { MockAdapter } from './adapters/MockAdapter.js';
 import { Parser } from './core/Parser.js';
@@ -54,7 +55,10 @@ function applyData(rawData) {
 }
 
 /**
- * アプリケーションの初期化
+ * アプリケーションの初期化（ハイブリッド取得方式）
+ * 1. localStorageキャッシュがあれば0秒で即座に初期化・描画 (SWR)
+ * 2. 静的 data.json を最優先で高速取得 (0.1秒)
+ * 3. 静的JSONが存在しない場合は従来のGAS APIまたはMockへ自動フォールバック
  */
 async function bootstrap() {
   let isRenderedFromCache = false;
@@ -70,22 +74,59 @@ async function bootstrap() {
     console.warn('Cache load error:', err);
   }
 
-  // 2. ネットワークから最新データを取得
+  // 2. ネットワークから最新データを取得（ハイブリッド取得）
   const params = new URLSearchParams(window.location.search);
+  const dataParam = params.get('data');
   const apiUrlParam = params.get('api');
-  
-  const adapter = (apiUrlParam || window.DEFAULT_API_URL)
-    ? new GasAdapter(apiUrlParam || window.DEFAULT_API_URL)
-    : new MockAdapter('./mock_data.json');
 
+  let rawData = null;
+
+  // (A) 静的JSONの取得を試行（パラメータ指定またはデフォルトの ./data.json）
+  // ※ ?api= が明示的に指定されている場合は直接APIへ向かう
+  if (!apiUrlParam) {
+    const staticPath = dataParam || './data.json';
+    try {
+      const staticAdapter = new StaticJsonAdapter(staticPath);
+      rawData = await staticAdapter.fetchData();
+    } catch (staticErr) {
+      if (dataParam) {
+        console.error('明示指定された静的JSONの取得に失敗しました:', staticErr);
+        if (!isRenderedFromCache) {
+          showError(`指定されたデータファイルの取得に失敗しました: ${staticErr.message}`);
+          return;
+        }
+      }
+      // 静的JSONが見つからない場合はフォールバックへ進む
+    }
+  }
+
+  // (B) 静的JSONが未取得の場合のフォールバック（GAS API または Mock）
+  if (!rawData) {
+    try {
+      const fallbackAdapter = (apiUrlParam || window.DEFAULT_API_URL)
+        ? new GasAdapter(apiUrlParam || window.DEFAULT_API_URL)
+        : new MockAdapter('./mock_data.json');
+      rawData = await fallbackAdapter.fetchData();
+    } catch (fallbackErr) {
+      if (!isRenderedFromCache) {
+        console.error('データ取得エラー:', fallbackErr);
+        showError('データの読み込みに失敗しました。時間をおいて再読み込みしてください。');
+        return;
+      } else {
+        console.warn('Background sync failed:', fallbackErr);
+        return;
+      }
+    }
+  }
+
+  // 取得した最新データで状態を更新＆キャッシュ保存
   try {
-    const rawData = await adapter.fetchData();
     Storage.saveTimetableCache(rawData);
 
     if (!isRenderedFromCache) {
       applyData(rawData);
     } else {
-      // キャッシュ描画済みの場合は最新公演情報（完売など）を安全に更新
+      // キャッシュ描画済みの場合は最新公演情報（完売状況など）を安全に更新
       if (rawData.heatmap) heatmapData = rawData.heatmap;
       if (rawData.easterEgg) window.easterEggData = rawData.easterEgg;
       allShows = (rawData.shows || []).map((s, idx) => Parser.normalizeShow(s, idx));
@@ -94,12 +135,10 @@ async function bootstrap() {
         filterShows(activeDay);
       }
     }
-  } catch (err) {
+  } catch (applyErr) {
+    console.error('データ適用エラー:', applyErr);
     if (!isRenderedFromCache) {
-      console.error('Bootstrap Error:', err);
-      showError('データの読み込みに失敗しました。時間をおいて再読み込みしてください。');
-    } else {
-      console.warn('Background sync failed:', err);
+      showError('データの反映中にエラーが発生しました。');
     }
   }
 }
