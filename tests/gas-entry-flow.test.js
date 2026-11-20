@@ -186,6 +186,7 @@ test('通し：準備 → 作成 → 記入 → 取り込み → 再取り込み
   assert.ok(readmeText.includes('=IMAGE(') && readmeText.includes('readme-organizer-flow.png'), 'Readme にイラスト画像の数式が無い');
   assert.ok(!readmeText.includes('ポスター'), 'Readme に旧表記「ポスター」が残っている');
   assert.ok(!readmeText.includes('entryImportAll') && !readmeText.includes('setupDraftSheet'), '主催向け Readme に英語の関数名が混ざっている');
+  assert.ok(readmeText.includes('テレスコープ') && readmeText.includes('@kizunan'), 'Readme に制作クレジット・連絡先（@kizunan）が無い');
 
   const tabColorOf = (name) => organizer.sheets.find((x) => x.name === name)?.tabColor;
   assert.equal(tabColorOf('Readme'), '#1e1b4b');

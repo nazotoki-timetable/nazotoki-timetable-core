@@ -2,6 +2,13 @@
   "name": "universal-timetable-core",
   "version": "2.0.0",
   "private": true,
+  "license": "MIT",
+  "author": "TELESCOPE (テレスコープ) <https://x.com/kizunan>",
+  "homepage": "https://github.com/nazotoki-timetable/nazotoki-timetable-core",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nazotoki-timetable/nazotoki-timetable-core.git"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",

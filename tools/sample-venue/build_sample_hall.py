@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 """サンプル会場（3 フロアの屋内図と、建物の外の周辺地図）と venue_map.json を生成する。
 
-実在の会場の公式フロアマップを参考に、部屋の並びと通路だけを残して描き直した「サンプル」の図。公式の図の画像そのものは使っていない。
-寸法・扉の位置は簡略化しており、実際とは異なる。画面にもファイルにも、実在の施設名・通りの名前は出さない。
+部屋の並びと通路を簡略化したサンプルの図。画面にもファイルにも、実在の施設名・通りの名前は出さない。
 西側の階段は非常階段のため、地図には描くが経路には使わない（階の移動は南階段だけ）。
 交流スペース・フリースペースは壁のない広場で、通路と続いている。
-座標は参考にした 1F・3F の図（1722x1128）にそろえ、2F（1172x758）は 1.47 倍して重ねた。
 
 建物の外（周辺地図・別館A/B）は OpenStreetMap のデータから作る（tools/outdoor-map/osm_outdoor.py、docs/OUTDOOR_ROUTE.md）。
   - 取得したデータは tools/sample-venue/osm_cache.json に保存（ODbL）。あれば通信しない。名前（name）は保存しない
@@ -32,7 +30,7 @@ W, H = 1720, 1130
 FONT = "'Hiragino Sans','Noto Sans JP','Noto Sans CJK JP','IPAGothic',sans-serif"
 INK = '#2b2e3a'
 WALL = 7
-FILL = {'room': '#ffffff', 'stairs': '#eef0f5', 'emergency': '#f1f1ee', 'service': '#f1f1ee', 'void': '#e2e4ec'}
+FILL = {'room': '#ffffff', 'stairs': '#eef0f5', 'emergency': '#f1f1ee', 'service': '#f1f1ee', 'void': '#e2e4ec', 'closed': '#cfd2dc'}
 
 # 部屋：(表示名, x0, y0, x1, y1, 種類, 文字の大きさ)
 # 通路：(x0, y0, x1, y1)
@@ -46,9 +44,9 @@ FLOORS = {
             ('第1会議室', 536, 110, 717, 322, 'room', 44),
             ('トイレ', 717, 110, 835, 322, 'service', 30),
             ('トイレ', 885, 110, 1085, 255, 'service', 30),
-            ('資料室', 705, 367, 835, 518, 'service', 30),
-            ('事務室', 885, 367, 1085, 560, 'service', 36),
-            ('舞台', 1085, 110, 1645, 345, 'service', 44),
+            ('', 705, 367, 835, 518, 'closed', 0),
+            ('', 885, 367, 1085, 560, 'closed', 0),
+            ('', 1085, 110, 1645, 345, 'closed', 0),
             ('ホール', 1085, 345, 1645, 980, 'room', 72),
             ('EV', 575, 688, 665, 775, 'service', 30),
             ('南階段', 705, 825, 820, 960, 'stairs', 30),
@@ -68,8 +66,8 @@ FLOORS = {
             ('交流スペース', 888, 107, 1086, 318, 'area', 34),
             ('第4会議室', 706, 364, 888, 618, 'room', 40),
             ('フリースペース', 888, 318, 1086, 515, 'area', 30),
-            ('吹抜', 961, 515, 1086, 897, 'void', 30),
-            ('吹抜（ホール）', 1089, 107, 1647, 1060, 'void', 44),
+            ('', 961, 515, 1086, 897, 'void', 0),
+            ('', 1089, 107, 1647, 1060, 'void', 0),
             ('EV', 573, 686, 661, 773, 'service', 30),
             ('南階段', 703, 810, 821, 957, 'stairs', 30),
         ],
@@ -85,10 +83,10 @@ FLOORS = {
             ('第8会議室', 350, 110, 515, 320, 'room', 40),
             ('第7会議室', 515, 110, 720, 320, 'room', 44),
             ('トイレ', 720, 110, 885, 320, 'service', 30),
-            ('電気室', 885, 110, 1085, 365, 'service', 32),
+            ('', 885, 110, 1085, 365, 'closed', 0),
             ('第6会議室', 790, 575, 885, 775, 'room', 30),
-            ('機械室', 885, 367, 1085, 905, 'service', 32),
-            ('ホール上部', 1088, 107, 1648, 1083, 'void', 44),
+            ('', 885, 367, 1085, 905, 'closed', 0),
+            ('', 1088, 107, 1648, 1083, 'void', 0),
             ('EV', 577, 688, 665, 775, 'service', 30),
             ('南階段', 705, 838, 822, 962, 'stairs', 30),
         ],
@@ -162,7 +160,11 @@ def svg_floor(spec):
                 out.append(text(cx, cy + size * 0.36, name, size))
             continue
         fill = 'url(#hatch)' if kind == 'void' else FILL[kind]
-        out.append(f'<rect x="{x0}" y="{y0}" width="{w}" height="{h}" rx="6" fill="{fill}" stroke="{INK}" stroke-width="{WALL}"/>')
+        stroke = '#9a9db0' if kind in ('closed', 'void') else INK
+        sw = WALL if kind in ('room', 'stairs') else 4
+        out.append(f'<rect x="{x0}" y="{y0}" width="{w}" height="{h}" rx="6" fill="{fill}" stroke="{stroke}" stroke-width="{sw}"/>')
+        if not name or not size:
+            continue
         cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
         color = INK if kind in ('room', 'stairs') else '#7d8091'
         if kind in ('stairs', 'emergency'):

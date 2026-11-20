@@ -4,8 +4,6 @@
 <polygon points="130.0,110.0 107.1,292.0 420.0,292.0 420.0,73.6 130.0,110.0 130.0,110.0" fill="#ffffff" stroke="#2b2e3a" stroke-width="7" stroke-linejoin="round"/>
 <text x="264" y="197" text-anchor="middle" font-family="'Hiragino Sans','Noto Sans JP','Noto Sans CJK JP','IPAGothic',sans-serif" font-size="40" font-weight="800" fill="#2b2e3a" >研修室3</text>
 <polygon points="1050.0,46.0 1635.0,110.0 1663.0,359.0 1255.0,359.0 1255.0,439.0 420.0,439.0 420.0,73.6 640.0,46.0" fill="#cfd2dc" stroke="#9a9db0" stroke-width="4" stroke-linejoin="round"/>
-<text x="1042" y="246" text-anchor="middle" font-family="'Hiragino Sans','Noto Sans JP','Noto Sans CJK JP','IPAGothic',sans-serif" font-size="40" font-weight="800" fill="#8a8d99" >事務室</text>
-<text x="1042" y="286" text-anchor="middle" font-family="'Hiragino Sans','Noto Sans JP','Noto Sans CJK JP','IPAGothic',sans-serif" font-size="26" font-weight="700" fill="#8a8d99" >立入不可</text>
 <polygon points="102.8,696.0 200.0,696.0 200.0,592.0 557.0,592.0 557.0,945.7 122.0,884.0" fill="#ffffff" stroke="#2b2e3a" stroke-width="7" stroke-linejoin="round"/>
 <text x="330" y="783" text-anchor="middle" font-family="'Hiragino Sans','Noto Sans JP','Noto Sans CJK JP','IPAGothic',sans-serif" font-size="40" font-weight="800" fill="#2b2e3a" >展示室3</text>
 <polygon points="1127.0,592.0 1127.0,966.0 700.0,966.0 557.0,945.7 557.0,592.0" fill="#ffffff" stroke="#2b2e3a" stroke-width="7" stroke-linejoin="round"/>
@@ -26,8 +24,7 @@
 <text x="1610" y="385" text-anchor="middle" font-family="'Hiragino Sans','Noto Sans JP','Noto Sans CJK JP','IPAGothic',sans-serif" font-size="18" font-weight="700" fill="#7d8091" >非常階段</text>
 <polygon points="1460.0,709.0 1265.0,709.0 1265.0,592.0 1460.0,592.0" fill="#eef0f5" stroke="#2b2e3a" stroke-width="4" stroke-linejoin="round"/>
 <text x="1362" y="661" text-anchor="middle" font-family="'Hiragino Sans','Noto Sans JP','Noto Sans CJK JP','IPAGothic',sans-serif" font-size="28" font-weight="700" fill="#7d8091" >EV</text>
-<polygon points="1560.0,709.0 1460.0,709.0 1460.0,592.0 1560.0,592.0" fill="#f1f1ee" stroke="#2b2e3a" stroke-width="4" stroke-linejoin="round"/>
-<text x="1510" y="658" text-anchor="middle" font-family="'Hiragino Sans','Noto Sans JP','Noto Sans CJK JP','IPAGothic',sans-serif" font-size="22" font-weight="700" fill="#7d8091" >給湯室</text>
+<polygon points="1560.0,709.0 1460.0,709.0 1460.0,592.0 1560.0,592.0" fill="#cfd2dc" stroke="#9a9db0" stroke-width="4" stroke-linejoin="round"/>
 <polygon points="1660.0,592.0 1660.0,677.7 1656.5,714.0 1560.0,714.0 1560.0,592.0" fill="#f1f1ee" stroke="#2b2e3a" stroke-width="4" stroke-linejoin="round"/>
 <text x="1610" y="661" text-anchor="middle" font-family="'Hiragino Sans','Noto Sans JP','Noto Sans CJK JP','IPAGothic',sans-serif" font-size="22" font-weight="700" fill="#7d8091" >トイレ</text>
 <polygon points="200.0,696.0 102.8,696.0 100.0,668.4 100.0,592.0 200.0,592.0" fill="#f1f1ee" stroke="#2b2e3a" stroke-width="4" stroke-linejoin="round"/>

@@ -6,7 +6,7 @@
 <rect x="835" y="255" width="50" height="265" fill="#dfe2ea"/>
 <rect x="705" y="518" width="380" height="382" fill="#dfe2ea"/>
 <rect x="665" y="700" width="40" height="75" fill="#dfe2ea"/>
-<rect x="35" y="160" width="90" height="160" rx="6" fill="#f1f1ee" stroke="#2b2e3a" stroke-width="7"/>
+<rect x="35" y="160" width="90" height="160" rx="6" fill="#f1f1ee" stroke="#2b2e3a" stroke-width="4"/>
 <line x1="49" y1="222" x2="111" y2="222" stroke="#2b2e3a" stroke-width="3" opacity=".5"/>
 <line x1="49" y1="234" x2="111" y2="234" stroke="#2b2e3a" stroke-width="3" opacity=".5"/>
 <line x1="49" y1="246" x2="111" y2="246" stroke="#2b2e3a" stroke-width="3" opacity=".5"/>
@@ -23,19 +23,16 @@
 <rect x="536" y="110" width="181" height="212" rx="6" fill="#ffffff" stroke="#2b2e3a" stroke-width="7"/>
 <text x="626.5" y="207.2" text-anchor="middle" font-family="'Hiragino Sans','Noto Sans JP','Noto Sans CJK JP','IPAGothic',sans-serif" font-size="44" font-weight="700" fill="#2b2e3a" >第1</text>
 <text x="626.5" y="257.8" text-anchor="middle" font-family="'Hiragino Sans','Noto Sans JP','Noto Sans CJK JP','IPAGothic',sans-serif" font-size="44" font-weight="700" fill="#2b2e3a" >会議室</text>
-<rect x="717" y="110" width="118" height="212" rx="6" fill="#f1f1ee" stroke="#2b2e3a" stroke-width="7"/>
+<rect x="717" y="110" width="118" height="212" rx="6" fill="#f1f1ee" stroke="#2b2e3a" stroke-width="4"/>
 <text x="776.0" y="226.8" text-anchor="middle" font-family="'Hiragino Sans','Noto Sans JP','Noto Sans CJK JP','IPAGothic',sans-serif" font-size="30" font-weight="700" fill="#7d8091" >トイレ</text>
-<rect x="885" y="110" width="200" height="145" rx="6" fill="#f1f1ee" stroke="#2b2e3a" stroke-width="7"/>
+<rect x="885" y="110" width="200" height="145" rx="6" fill="#f1f1ee" stroke="#2b2e3a" stroke-width="4"/>
 <text x="985.0" y="193.3" text-anchor="middle" font-family="'Hiragino Sans','Noto Sans JP','Noto Sans CJK JP','IPAGothic',sans-serif" font-size="30" font-weight="700" fill="#7d8091" >トイレ</text>
-<rect x="705" y="367" width="130" height="151" rx="6" fill="#f1f1ee" stroke="#2b2e3a" stroke-width="7"/>
-<text x="770.0" y="453.3" text-anchor="middle" font-family="'Hiragino Sans','Noto Sans JP','Noto Sans CJK JP','IPAGothic',sans-serif" font-size="30" font-weight="700" fill="#7d8091" >資料室</text>
-<rect x="885" y="367" width="200" height="193" rx="6" fill="#f1f1ee" stroke="#2b2e3a" stroke-width="7"/>
-<text x="985.0" y="476.46" text-anchor="middle" font-family="'Hiragino Sans','Noto Sans JP','Noto Sans CJK JP','IPAGothic',sans-serif" font-size="36" font-weight="700" fill="#7d8091" >事務室</text>
-<rect x="1085" y="110" width="560" height="235" rx="6" fill="#f1f1ee" stroke="#2b2e3a" stroke-width="7"/>
-<text x="1365.0" y="243.34" text-anchor="middle" font-family="'Hiragino Sans','Noto Sans JP','Noto Sans CJK JP','IPAGothic',sans-serif" font-size="44" font-weight="700" fill="#7d8091" >舞台</text>
+<rect x="705" y="367" width="130" height="151" rx="6" fill="#cfd2dc" stroke="#9a9db0" stroke-width="4"/>
+<rect x="885" y="367" width="200" height="193" rx="6" fill="#cfd2dc" stroke="#9a9db0" stroke-width="4"/>
+<rect x="1085" y="110" width="560" height="235" rx="6" fill="#cfd2dc" stroke="#9a9db0" stroke-width="4"/>
 <rect x="1085" y="345" width="560" height="635" rx="6" fill="#ffffff" stroke="#2b2e3a" stroke-width="7"/>
 <text x="1365.0" y="688.42" text-anchor="middle" font-family="'Hiragino Sans','Noto Sans JP','Noto Sans CJK JP','IPAGothic',sans-serif" font-size="72" font-weight="700" fill="#2b2e3a" >ホール</text>
-<rect x="575" y="688" width="90" height="87" rx="6" fill="#f1f1ee" stroke="#2b2e3a" stroke-width="7"/>
+<rect x="575" y="688" width="90" height="87" rx="6" fill="#f1f1ee" stroke="#2b2e3a" stroke-width="4"/>
 <text x="620.0" y="742.3" text-anchor="middle" font-family="'Hiragino Sans','Noto Sans JP','Noto Sans CJK JP','IPAGothic',sans-serif" font-size="30" font-weight="700" fill="#7d8091" >EV</text>
 <rect x="705" y="825" width="115" height="135" rx="6" fill="#eef0f5" stroke="#2b2e3a" stroke-width="7"/>
 <line x1="719" y1="887" x2="806" y2="887" stroke="#2b2e3a" stroke-width="3" opacity=".5"/>

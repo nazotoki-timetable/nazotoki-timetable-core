@@ -828,6 +828,31 @@ function setupReadmeSheet(ss) {
     curRow++;
   });
 
+  // 制作クレジット・ご利用時のご連絡お願い（任意）
+  sheet.setRowHeight(curRow, 14);
+  curRow++;
+
+  sheet.getRange(curRow, 1, 1, 6).merge()
+    .setValue("■ このテンプレートについて・制作クレジット")
+    .setBackground("#1f2937").setFontColor("#ffffff").setFontWeight("bold").setFontSize(11)
+    .setVerticalAlignment("middle");
+  sheet.setRowHeight(curRow, 30);
+  curRow++;
+
+  sheet.getRange(curRow, 1, 1, 2).merge().setValue("制作・配布\n（MITライセンス）")
+    .setBackground("#f8fafc").setFontColor("#1e293b").setFontWeight("bold").setFontSize(9.5)
+    .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
+  sheet.getRange(curRow, 3, 1, 4).merge().setValue(
+    "制作：テレスコープ（X：@kizunan / https://x.com/kizunan）\n" +
+    "MITライセンスのため連絡不要・無料で自由にお使いいただけます（画面下部の「Developed by テレスコープ」表記はできれば残していただけると励みになります）。\n" +
+    "もしよろしければ「〇〇で使います！」と X（@kizunan）のDMで一報いただけるととても嬉しいです！公式Xでの告知協力（リポスト等）や、ご希望に応じて導入事例として紹介させていただきます。"
+  )
+    .setBackground("#ffffff").setFontColor("#334155").setFontSize(9.5)
+    .setVerticalAlignment("middle").setWrap(true);
+  solidBorder(sheet.getRange(curRow, 1, 1, 6));
+  sheet.setRowHeight(curRow, 68);
+  curRow++;
+
   // 最下部の極小管理者メモ（1行）
   sheet.setRowHeight(curRow, 12);
   curRow++;

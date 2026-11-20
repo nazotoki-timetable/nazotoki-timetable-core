@@ -17,6 +17,8 @@ import { closeTopLayer, runDirectionalTransition } from './ui/motion.js';
 import { HeroMotion } from './ui/heroMotion.js';
 import { ColTitleStrip } from './ui/ColTitleStrip.js';
 
+console.info('Universal Timetable Core — Developed by テレスコープ (https://x.com/kizunan)');
+
 let heroMotion = null;
 
 const urlParams = new URLSearchParams(window.location.search);

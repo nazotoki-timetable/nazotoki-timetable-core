@@ -970,6 +970,20 @@
   letter-spacing: 0.04em;
 }
 
+.dev-footer-link {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--fes-muted) 45%, transparent);
+  text-underline-offset: 3px;
+  transition: color 0.15s ease, text-decoration-color 0.15s ease;
+}
+
+.dev-footer-link:hover,
+.dev-footer-link:focus-visible {
+  color: var(--fes-main);
+  text-decoration-color: currentColor;
+}
+
 /* --- 特殊演出（ノイズ・モヤ・ロック） --- */
 @keyframes mystic-pulse {
   0%, 100% {

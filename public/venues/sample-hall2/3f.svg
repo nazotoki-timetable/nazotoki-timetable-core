@@ -6,13 +6,8 @@
 <polygon points="1635.0,110.0 1237.0,66.5 1237.0,339.0 1660.8,339.0" fill="#ffffff" stroke="#2b2e3a" stroke-width="7" stroke-linejoin="round"/>
 <text x="1449" y="219" text-anchor="middle" font-family="'Hiragino Sans','Noto Sans JP','Noto Sans CJK JP','IPAGothic',sans-serif" font-size="44" font-weight="800" fill="#2b2e3a" >研修室1</text>
 <polygon points="1237.0,454.0 390.0,454.0 390.0,77.4 640.0,46.0 1050.0,46.0 1237.0,66.5" fill="#cfd2dc" stroke="#9a9db0" stroke-width="4" stroke-linejoin="round"/>
-<text x="814" y="254" text-anchor="middle" font-family="'Hiragino Sans','Noto Sans JP','Noto Sans CJK JP','IPAGothic',sans-serif" font-size="40" font-weight="800" fill="#8a8d99" >情報コーナー</text>
-<text x="814" y="294" text-anchor="middle" font-family="'Hiragino Sans','Noto Sans JP','Noto Sans CJK JP','IPAGothic',sans-serif" font-size="26" font-weight="700" fill="#8a8d99" >立入不可</text>
-<polygon points="395.0,704.0 395.0,922.7 122.0,884.0 103.6,704.0" fill="#f1f1ee" stroke="#2b2e3a" stroke-width="4" stroke-linejoin="round"/>
-<text x="249" y="824" text-anchor="middle" font-family="'Hiragino Sans','Noto Sans JP','Noto Sans CJK JP','IPAGothic',sans-serif" font-size="30" font-weight="700" fill="#7d8091" >資料室</text>
+<polygon points="395.0,704.0 395.0,922.7 122.0,884.0 103.6,704.0" fill="#cfd2dc" stroke="#9a9db0" stroke-width="4" stroke-linejoin="round"/>
 <polygon points="1265.0,597.0 1265.0,714.0 1656.5,714.0 1640.0,884.0 1140.0,966.0 700.0,966.0 395.0,922.7 395.0,597.0" fill="#cfd2dc" stroke="#9a9db0" stroke-width="4" stroke-linejoin="round"/>
-<text x="1026" y="786" text-anchor="middle" font-family="'Hiragino Sans','Noto Sans JP','Noto Sans CJK JP','IPAGothic',sans-serif" font-size="44" font-weight="800" fill="#8a8d99" >ライブラリー</text>
-<text x="1026" y="826" text-anchor="middle" font-family="'Hiragino Sans','Noto Sans JP','Noto Sans CJK JP','IPAGothic',sans-serif" font-size="26" font-weight="700" fill="#8a8d99" >立入不可</text>
 <polygon points="195.0,409.0 110.0,409.0 110.0,299.0 195.0,299.0" fill="#eef0f5" stroke="#2b2e3a" stroke-width="4" stroke-linejoin="round"/>
 <text x="152" y="363" text-anchor="middle" font-family="'Hiragino Sans','Noto Sans JP','Noto Sans CJK JP','IPAGothic',sans-serif" font-size="24" font-weight="700" fill="#7d8091" >EV</text>
 <polygon points="298.0,439.0 200.0,439.0 200.0,299.0 298.0,299.0" fill="#f1f1ee" stroke="#2b2e3a" stroke-width="4" stroke-linejoin="round"/>
@@ -27,8 +22,7 @@
 <text x="1610" y="385" text-anchor="middle" font-family="'Hiragino Sans','Noto Sans JP','Noto Sans CJK JP','IPAGothic',sans-serif" font-size="18" font-weight="700" fill="#7d8091" >非常階段</text>
 <polygon points="1460.0,709.0 1265.0,709.0 1265.0,592.0 1460.0,592.0" fill="#eef0f5" stroke="#2b2e3a" stroke-width="4" stroke-linejoin="round"/>
 <text x="1362" y="661" text-anchor="middle" font-family="'Hiragino Sans','Noto Sans JP','Noto Sans CJK JP','IPAGothic',sans-serif" font-size="28" font-weight="700" fill="#7d8091" >EV</text>
-<polygon points="1560.0,709.0 1460.0,709.0 1460.0,592.0 1560.0,592.0" fill="#f1f1ee" stroke="#2b2e3a" stroke-width="4" stroke-linejoin="round"/>
-<text x="1510" y="658" text-anchor="middle" font-family="'Hiragino Sans','Noto Sans JP','Noto Sans CJK JP','IPAGothic',sans-serif" font-size="22" font-weight="700" fill="#7d8091" >多目的</text>
+<polygon points="1560.0,709.0 1460.0,709.0 1460.0,592.0 1560.0,592.0" fill="#cfd2dc" stroke="#9a9db0" stroke-width="4" stroke-linejoin="round"/>
 <polygon points="1660.0,592.0 1660.0,677.7 1656.5,714.0 1560.0,714.0 1560.0,592.0" fill="#f1f1ee" stroke="#2b2e3a" stroke-width="4" stroke-linejoin="round"/>
 <text x="1610" y="661" text-anchor="middle" font-family="'Hiragino Sans','Noto Sans JP','Noto Sans CJK JP','IPAGothic',sans-serif" font-size="22" font-weight="700" fill="#7d8091" >トイレ</text>
 <polygon points="200.0,696.0 102.8,696.0 100.0,668.4 100.0,592.0 200.0,592.0" fill="#f1f1ee" stroke="#2b2e3a" stroke-width="4" stroke-linejoin="round"/>
